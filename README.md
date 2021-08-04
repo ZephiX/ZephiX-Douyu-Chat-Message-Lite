@@ -1,4 +1,4 @@
-# ZephiX-Douyu-Chat-Message-Live
+# ZephiX-Douyu-Chat-Message-Lite
 
 ## 斗鱼直播弹幕抓取 -- 精简版  c# lib
 ### 2021.08
