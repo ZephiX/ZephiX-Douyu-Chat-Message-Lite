@@ -573,31 +573,32 @@ namespace Douyu
         }
 
         
+        //handle wsProxy server responses
         private void onwsProxyMessageReceived(DouyuSocketPack message)
         {
             string msgType = message["type"];
 
             switch (msgType)
             {
-                case "error":
+                case "error":  //error, disconnect and dispose
                     LiveChatMessage errmsg = new(RoomID, "douyutv", "DouyuMessage", $"An error occurred while login, please check Room ID. Error Code: {message["code"]}", 0, "System", 0, "system", 0, "Error", TimeStamp.Now());
                     onLiveMessageReceived?.Invoke(errmsg);
                     Dispose();
                     break;
 
-                case "loginres":
+                case "loginres": //login response, store visitor user name and user id
                     int.TryParse(message["userid"], out userID);
                     userName = message["username"];
                     wsProxyStats = ConnectionStatus.OK;
                     break;
 
-                case "keeplive":
+                case "keeplive": //keeplive response, generate and store next "kd" hash
                     int.TryParse(message["hot"], out audiCount);
                     wsProxyKeepliveSign(message["kd"]);
                     wsProxyStats = ConnectionStatus.OK;
                     break;
 
-                case "msgrepeaterproxylist":
+                case "msgrepeaterproxylist":  //get danmu ws server list
 
                     string[] lst = message["list"].Trim('/').Split("/");
 
@@ -612,7 +613,7 @@ namespace Douyu
                     danmuServer = sb.ToString();
                     break;
 
-                case "setmsggroup":
+                case "setmsggroup": //get message group and begin danmu server connection
                     int.TryParse(message["gid"], out groupID);
                     wsTasks.Add(wsProxyH5ckreq());
                     wsTasks.Add(danmuLogin());
@@ -621,32 +622,33 @@ namespace Douyu
             }
         }
 
+        //handle danmy ws server responses
         private void ondanmuMessageReceived(DouyuSocketPack message)
         {
             string msgType = message["type"];
 
             switch (msgType)
             {
-                case "error":
+                case "error": //error, disconnect and dispose
                     LiveChatMessage errmsg = new(RoomID, "douyutv", "DouyuMessage", $"An error occurred while login, please check Room ID. Error Code: {message["code"]}", 0, "System", 0, "system", 0, "Error", TimeStamp.Now());
                     onLiveMessageReceived?.Invoke(errmsg);
                     Dispose();
                     break;
 
-                case "loginres":
+                case "loginres": //login response, start group join task
                     wsTasks.Add(danmuJoinGroup());
                     break;
 
-                case "pingreq":
+                case "pingreq": //ping request start keep live task
                     wsTasks.Add(danmuKeepLive());
                     danmuStats = ConnectionStatus.OK;
                     break;
 
-                case "mrkl":
+                case "mrkl": //keep live response
                     danmuStats = ConnectionStatus.OK;
                     break;
 
-                case "chatmsg":
+                case "chatmsg": //received a chat message, raise up a message received event
                     int uid;
                     int.TryParse(message["uid"], out uid);
                     int ulv;
@@ -657,6 +659,16 @@ namespace Douyu
                     onLiveMessageReceived?.Invoke(msg);
                     break;
 
+                case "dgb": //gift receivedtype@=dgb/rid@=216911/gfid@=20000/gs@=0/uid@=21890373/nn@=Zephiaus/ic@=avanew@Sface@S201704@S01@S15@S925d3a419c5cbc0dc6043101f2e48bc9/eid@=0/eic@=0/level@=25/dw@=0/gfcnt@=10/hits@=10/bcnt@=1/bst@=7/rg@=4/ct@=0/el@=/cm@=0/bnn@=云月/bl@=15/brid@=216911/hc@=6172e5d260ab7353e385e3102c07b730/sahf@=0/fc@=0/bnid@=1/bnl@=1/receive_uid@=1919230/receive_nn@=云月溯风/from@=1/pfm@=2048/pma@=29578529/mss@=29578543/
+
+                    break;
+
+                case "uenter": //user enter  type@=uenter/rid@=216911/uid@=1919230/nn@=云月溯风/level@=22/rg@=5/ic@=avatar_v3@S202104@Se2782c81439842ffaec8ed4ba5208e29/rni@=0/ol@=27/el@=/sahf@=0/wgei@=0
+
+                    break;
+                case "noble_num_info": //vip number type@=noble_num_info/sum@=0/vn@=1/rid@=216911/list@=/
+
+                    break;
             }
         }
 
