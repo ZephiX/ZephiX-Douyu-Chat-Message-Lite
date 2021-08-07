@@ -22,9 +22,7 @@ namespace Douyu
 
        Email: ZeffiX@qq.com
        QQ: 8708534     
-    */
 
-    /*
         Douyu.com livestream chat message receiver lib - light version
         Currently captures chat messages only
 
@@ -40,7 +38,7 @@ namespace Douyu
             Client = 689,
         }
 
-        public string this[string Key]
+        public string this[string Key]  //message deserializer,get value of [key]
         {
             get
             {
@@ -50,41 +48,34 @@ namespace Douyu
             }
         }
 
-        public int Length { get { return Encoding.UTF8.GetByteCount(_body) + 8; } }
-        public SenderType Sender { get { if (_sender == 690) { return SenderType.Server; } else { return SenderType.Client; } } set => _sender = (short)Sender; }
-        public string Message
+        public int Length { get { return Encoding.UTF8.GetByteCount(_body) + 8; } }  //Length value of package header 
+        public SenderType Sender { get { if (_sender == 690) { return SenderType.Server; } else { return SenderType.Client; } } set => _sender = (short)Sender; }  //message type of package 690 - server 689 - client
+        public string Message //raw string of message, can be set
         {
             get { return _body; }
             set
             {
-                if (Message.PadRight(1) == "\0")
-                {
-                    _body = Message;
-                }
-                else
-                {
-                    _body = Message + "\0";
-                }
+                _body = value.Substring(value.Length -1,1)=="\0" ? value : value+"\0" ;
+                _sender = 689;
             }
         }
 
         private string _body;
         private short _sender;
 
-        DouyuSocketPack()
+        DouyuSocketPack() //create an empty message
         {
             _body = "\0";
             _sender = 689;
         }
 
-        public DouyuSocketPack(string Message)
+        public DouyuSocketPack(string Message) //create a client message from douyu protocol formatted string
         {
             _sender = 689;
-            if (Message.PadRight(1) == "\0") _body = Message;
-            else _body = Message + "\0";
+            _body = Message.Substring(Message.Length - 1, 1) == "\0" ? Message : Message + "\0";
         }
 
-        public DouyuSocketPack(byte[] Message)
+        public DouyuSocketPack(byte[] Message) //create a client message from byte array
         {
             byte[] b;
             int len;
@@ -136,7 +127,7 @@ namespace Douyu
 
         }
 
-        public byte[] ToBytes()
+        public byte[] ToBytes()   //get byte array from message pack
         {
             int len = Encoding.UTF8.GetByteCount(_body) + 8;
             byte[] result = new byte[len + 4];
@@ -158,7 +149,7 @@ namespace Douyu
         }
 
 
-        public static string EscapeSlashAt(string str)
+        public static string EscapeSlashAt(string str)  
         {
             return str.Replace("/", "@S").Replace("@", "@A");
         }
@@ -209,9 +200,9 @@ namespace Douyu
 
         private int groupID, userID, audiCount; //livechat group id and guest user id
         private string deviceID; //"did" or "divid" 
-        private string wsProxyTimeSign;
+        private string wsProxyTimeSign;  //"kd" value for next wsproxy keeplive package
         private int wsProxyTimeStamp, danmuServerTimeStamp; //time of last "keeplive" message sent by each ws client
-        public ConnectionStatus wsProxyStats, danmuStats;
+        private ConnectionStatus wsProxyStats, danmuStats; 
         private CancellationTokenSource canceltoken; //general cancellation token for all function in this class
         private System.Timers.Timer timer; //general timer for all functions in this class
 
@@ -219,12 +210,12 @@ namespace Douyu
 
 
 
-        public DouyuLiveChat()
+        public DouyuLiveChat()  
         {
             Init();
         }
 
-        public void Init()
+        public void Init()  //init or recet instance
         {
             StatusDescripition = "Initiating!";
             groupID = 1;
@@ -244,7 +235,7 @@ namespace Douyu
 
 
 
-        public void Connect(int roomID)
+        public void Connect(int roomID) // start connecting to live room
         {
             Disconnect();
             RoomID = roomID;
@@ -254,9 +245,7 @@ namespace Douyu
             StatusDescripition = "Connecting!";
             if (httpLoader == null) httpLoader = new();
             canceltoken = new();
-            wsWSProxy = new();
-            wsWSProxy.Options.AddSubProtocol("-");
-            wsProxyStats = ConnectionStatus.Connecting;
+
 
             wsTasks.Add(wsProxyLogin());
 
@@ -264,7 +253,7 @@ namespace Douyu
 
 
 
-        public void Dispose()
+        public void Dispose() //disconnect and dispose all sources
         {
             Disconnect();
 
@@ -280,9 +269,11 @@ namespace Douyu
 
 
         //wsProxy websocket server connection and login method
-        private async Task wsProxyLogin()
+        private async Task wsProxyLogin() 
         {
-
+            wsWSProxy = new();
+            wsWSProxy.Options.AddSubProtocol("-");
+            wsProxyStats = ConnectionStatus.Connecting;
 
             // load wsProxy websocket server list from "https://www.douyu.com/lapi/live/gateway/web/{RoomID}?isH5=1" and randomly select one
 
@@ -311,7 +302,7 @@ namespace Douyu
             WsProxyReceiving();
 
             wsProxyStats = ConnectionStatus.Logging;
-            //generate and send login request message
+            //generate and send login request message,login as a visitor
             int rt = TimeStamp.Now();
             string s = $"type@=loginreq/roomid@={RoomID}/dfl@=/username@=/password@=/ltkid@=/biz@=/stk@=/devid@={deviceID}/ct@=0/pt@=2/cvr@=0/tvr@=7/apd@=/rt@={rt}/vk@={wsProxyLoginSign(rt)}/ver@=20190610/aver@=218101901/dmbt@=chrome/dmbv@=92/er@=1/\0";
             DouyuSocketPack msg = new(s);
@@ -338,7 +329,7 @@ namespace Douyu
         {
             if (wsWSProxy != null && wsWSProxy.State == WebSocketState.Open)
             {
-                string s = $"type@=h5ckreq/rid@={RoomID}/ti@=220120210731/\0";
+                string s = $"type@=h5ckreq/rid@={RoomID}/ti@={vdwdae325w_64we}/\0";
                 DouyuSocketPack msg = new(s);
                 await wsSend(wsWSProxy, msg.ToBytes());
 
@@ -346,6 +337,7 @@ namespace Douyu
         }
 
 
+        //Connect to danmuproxy ws server
         private async Task danmuLogin()
         {
 
@@ -364,6 +356,7 @@ namespace Douyu
             await wsSend(wsDanmuProxy, msg.ToBytes());
         }
 
+        //join message group
         private async Task danmuJoinGroup()
         {
             string s = $"type@=joingroup/rid@={RoomID}/gid@={groupID}/\0";
@@ -372,6 +365,7 @@ namespace Douyu
             danmuStats = ConnectionStatus.LoggedIn;
         }
 
+        //send keep live message to danmu server
         private async Task danmuKeepLive()
         {
             if (wsDanmuProxy != null && wsDanmuProxy.State == WebSocketState.Open)
@@ -384,8 +378,7 @@ namespace Douyu
         }
 
 
-
-
+        //send binary message
         private async Task wsSend(ClientWebSocket ws, byte[] buffer)
         {
             if (!canceltoken.Token.IsCancellationRequested && ws != null && ws.State == WebSocketState.Open)
@@ -395,7 +388,7 @@ namespace Douyu
         }
 
 
-
+        //disconnect from cunnected server
         private void Disconnect()
         {
             try
@@ -422,6 +415,7 @@ namespace Douyu
         }
 
 
+        //wsProxy server login hash
         private string wsProxyLoginSign(int timestamp)
         {
             StringBuilder sb = new();
@@ -439,7 +433,7 @@ namespace Douyu
         }
 
 
-
+        //wsProxy server keeplive hash
         private void wsProxyKeepliveSign(string hex)
         {
 
@@ -464,7 +458,7 @@ namespace Douyu
         }
 
 
-
+        //wsProxy ws receiving task
         private void WsProxyReceiving()
         {
             wsTasks.Add(Task.Factory.StartNew(async () =>
@@ -520,6 +514,7 @@ namespace Douyu
 
         }
 
+        //start danmu ws receiving task
         private void danmuReceiving()
         {
             wsTasks.Add(Task.Factory.StartNew(async () =>
@@ -577,6 +572,7 @@ namespace Douyu
             }, TaskCreationOptions.LongRunning));
         }
 
+        
         private void onwsProxyMessageReceived(DouyuSocketPack message)
         {
             string msgType = message["type"];
@@ -665,7 +661,7 @@ namespace Douyu
         }
 
 
-        private void onTimedEvent(Object source, ElapsedEventArgs e)
+        private void onTimedEvent(object source, ElapsedEventArgs e)
         {
             int timestamp = TimeStamp.Now();
             if (wsTasks != null) wsTasks.RemoveAll((x) => { return x.IsCompleted && x.CreationOptions != TaskCreationOptions.LongRunning; });
