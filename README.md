@@ -25,17 +25,19 @@
 ### LiveChatMessage记录定义如下
 ```public record LiveChatMessage(int RoomID, string Platform, string CID, string Content, int FromUID, string FromNickName, int FromLv, string FromBadge, int BadgeLv, string Icon, int TimeStamp);```
 
-RoomID - 直播间房间号 int
-Platform - 固定为"douyutv"请无视 string
-CID - 弹幕独立ID string
-Content - 弹幕消息 string
-FromUID - 弹幕发送人UserID int
-FromNickName - 弹幕发送人昵称 string
-FromLv - 弹幕发送人等级
-FromBadge - 弹幕发送人佩戴粉丝徽章 string
-Badge - 弹幕发送人粉丝徽章等级 int
-Icon - 弹幕发送人头像(小)完整URL string
-Timestame - 当前时间Unix时间戳 int
+参数|类型|描述
+------------ | ------------- | -------------
+RoomID | int | 直播间房间号
+Platform | string | 固定为"douyutv"请无视
+CID | string | 弹幕独立ID 可用作key
+Content | string | 弹幕消息内容
+FromUID | int | 弹幕发送人UserID
+FromNickName | string | 弹幕发送人昵称
+FromLv | int | 弹幕发送人等级
+FromBadge | string | 弹幕发送人佩戴粉丝徽章
+BadgeLv | int | 弹幕发送人粉丝徽章等级
+Icon | string | 弹幕发送人头像(小)URL
+Timestame | int | 当前时间Unix时间戳
 
 
 ## Email: ZeffiX@qq.com
