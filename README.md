@@ -37,7 +37,7 @@ FromLv | int | 弹幕发送人等级
 FromBadge | string | 弹幕发送人佩戴粉丝徽章
 BadgeLv | int | 弹幕发送人粉丝徽章等级
 Icon | string | 弹幕发送人头像(小)URL
-Timestamp | int | 当前时间Unix时间戳
+TimeStamp | int | 当前时间Unix时间戳
 
 
 ## Email: ZeffiX@qq.com
